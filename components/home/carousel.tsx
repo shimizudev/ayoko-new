@@ -14,6 +14,12 @@ function cleanDescription(input: string): string {
   return doc.body.textContent || '';
 }
 
+async function fetchTrailer(id: string): Promise<string> {
+  const data = await fetch(`/api/yt?id=${id}`);
+  const json = await data.json();
+  return json.url;
+}
+
 function useAutoPlay(
   animes: Anime[],
   currentIndex: number,
@@ -71,25 +77,65 @@ function useCarouselNavigation(
   return { nextSlide, prevSlide };
 }
 
-function ImageDisplay({ currentAnime }: { currentAnime: Anime }) {
+function RenderImage({ currentAnime }: { currentAnime: Anime }): JSX.Element {
   return (
-    <>
-      <Image
-        src={
-          currentAnime.bannerImage ??
-          (currentAnime.coverImage.extraLarge ||
-            currentAnime.coverImage.large ||
-            currentAnime.coverImage.medium)
-        }
-        alt={currentAnime.title.english || currentAnime.title.romaji}
-        layout="fill"
-        objectFit="cover"
-        className="brightness-50"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-    </>
+    <Image
+      src={
+        currentAnime.bannerImage ??
+        (currentAnime.coverImage.extraLarge ||
+          currentAnime.coverImage.large ||
+          currentAnime.coverImage.medium)
+      }
+      alt={currentAnime.title.english || currentAnime.title.romaji}
+      layout="fill"
+      objectFit="cover"
+      className="brightness-50"
+    />
   );
+}
+
+function VideoDisplay({
+  currentAnime,
+  isMuted,
+}: {
+  currentAnime: Anime;
+  isMuted: boolean;
+}) {
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    async function loadTrailer() {
+      if (currentAnime.trailer && currentAnime.trailer.id) {
+        const url = await fetchTrailer(currentAnime.trailer.id);
+        setTrailerUrl(url);
+      }
+    }
+    loadTrailer();
+  }, [currentAnime]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = 0.5; // Set volume to half
+    }
+  }, [trailerUrl]);
+
+  if (trailerUrl) {
+    return (
+      // eslint-disable-next-line jsx-a11y/media-has-caption
+      <video
+        ref={videoRef}
+        src={trailerUrl}
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        loop
+        muted={isMuted}
+        playsInline
+      />
+    );
+  }
+
+  return <RenderImage currentAnime={currentAnime} />;
 }
 
 function AnimeButtons({
@@ -267,7 +313,9 @@ export default function AnimeCarousel({
           transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
-          <ImageDisplay currentAnime={currentAnime} />
+          <VideoDisplay currentAnime={currentAnime} isMuted={isMuted} />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
           <AnimeInfo
             currentAnime={currentAnime}
             isMuted={isMuted}
