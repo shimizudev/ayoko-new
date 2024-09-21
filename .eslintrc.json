@@ -81,7 +81,9 @@
     "react/jsx-props-no-spreading": "off",
     "eslint-plugin-import/extensions": "off",
     "import/extensions": "off",
-    "eslint-plugin-import/no-extraneous-dependencies": "off"
+    "eslint-plugin-import/no-extraneous-dependencies": "off",
+    "import/no-extraneous-dependencies": "off",
+    "react/prop-types": "off"
   },
   "overrides": [
     {
