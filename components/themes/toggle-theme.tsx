@@ -12,34 +12,51 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 
+const getCurrentIcon = (theme: string | undefined) => {
+  switch (theme) {
+    case 'dark': {
+      return <Moon />;
+    }
+    case 'light': {
+      return <Sun />;
+    }
+    default: {
+      return <Monitor />;
+    }
+  }
+};
+
+const getNextTheme = (theme: string | undefined) => {
+  switch (theme) {
+    case 'dark': {
+      return 'light';
+    }
+    case 'light': {
+      return 'system';
+    }
+    default: {
+      return 'dark';
+    }
+  }
+};
+
 export default function ToggleTheme(): JSX.Element {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
-  if (!mounted) {
+  const handleToggle = () => {
+    const nextTheme = getNextTheme(theme);
+    setTheme(nextTheme);
+  };
+
+  if (!mounted)
     return (
       <Button className="rounded-full" size="icon">
         <Monitor />
       </Button>
     );
-  }
-
-  const currentIcon =
-    theme === 'dark' ? <Moon /> : theme === 'light' ? <Sun /> : <Monitor />;
-
-  const handleToggle = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
-  };
 
   return (
     <TooltipProvider>
@@ -54,7 +71,7 @@ export default function ToggleTheme(): JSX.Element {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2 }}
               >
-                {currentIcon}
+                {getCurrentIcon(theme)}
               </motion.div>
             </AnimatePresence>
           </Button>
