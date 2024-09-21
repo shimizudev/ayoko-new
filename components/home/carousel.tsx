@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Anime } from '@/lib/fetch/anime';
 import useMounted from '@/hooks/use-mounted';
+import { Skeleton } from '../ui/skeleton';
 
 function cleanDescription(input: string): string {
   const parser = new DOMParser();
@@ -75,6 +76,24 @@ function useCarouselNavigation(
   };
 
   return { nextSlide, prevSlide };
+}
+
+function RenderSkeleton() {
+  return (
+    <div className="relative max-h-[700px] min-h-[500px] w-full overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-between p-8">
+        <div className="max-w-2xl space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="hidden h-96 w-64 lg:block">
+          <Skeleton className="h-full w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function RenderImage({ currentAnime }: { currentAnime: Anime }): JSX.Element {
@@ -300,7 +319,7 @@ export default function AnimeCarousel({
 
   const toggleMute = () => setIsMuted(!isMuted);
 
-  if (!isMounted) return null;
+  if (!isMounted || !animes || animes.length === 0) return <RenderSkeleton />;
 
   return (
     <div className="relative max-h-[700px] min-h-[500px] w-full overflow-hidden">
