@@ -1,0 +1,33 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.associations": {
+    ".env*": "dotenv"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+  "github.copilot.enable": {
+    "*": true,
+    "dotenv": false
+  },
+  "cSpell.words": [
+    "anify",
+    "anilist",
+    "animepahe",
+    "animes",
+    "ayoko",
+    "consumet",
+    "Gogoanime",
+    "HIANIME",
+    "Kyoko",
+    "lucide",
+    "malsync",
+    "nextui",
+    "romaji",
+    "Sudatchi",
+    "tmdb",
+    "Zoro",
+    "zustand"
+  ]
+}
