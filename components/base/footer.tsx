@@ -2,6 +2,50 @@ import Link from 'next/link';
 import { Separator } from '../ui/separator';
 import DiscordIcon from '../icons/discord';
 import GithubIcon from '../icons/github';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import { Button } from '../ui/button';
+
+function DevAotoLink(): JSX.Element {
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Button variant="link">
+          <a
+            href="https://sohom829.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="-ml-4 font-normal text-primary hover:underline"
+          >
+            devaoto
+          </a>
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-64">
+        <div className="flex justify-between space-x-4">
+          <Avatar>
+            <AvatarImage src="https://avatars.githubusercontent.com/u/94981761?v=4" />
+            <AvatarFallback>AT</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold">@devaoto</h4>
+            <p className="text-sm">
+              The guy who designed and developed{' '}
+              <a href="https://www.ayoko.fun">Ayoko</a>
+            </p>
+            <div className="flex items-center pt-2">
+              <span className="text-xs text-muted-foreground">He/Him</span>
+            </div>
+          </div>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
 export default function Footer(): JSX.Element {
   return (
@@ -23,15 +67,7 @@ export default function Footer(): JSX.Element {
       </div>
       <div className="mt-4 flex flex-col items-center justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
         <p className="text-center text-xs md:text-left md:text-sm">
-          &copy; {new Date().getFullYear()} Ayoko | Developed by{' '}
-          <a
-            href="https://devaoto.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            devaoto
-          </a>
+          &copy; {new Date().getFullYear()} Ayoko | Developed by <DevAotoLink />
         </p>
         <div className="flex space-x-4">
           <Link
