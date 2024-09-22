@@ -28,12 +28,12 @@ interface FetchAnimeResponse {
 
 const query = `
  query FetchAnime($nextSeason: MediaSeason, $currentYear: Int, $currentSeason: MediaSeason, $nextYear: Int) {
-    trending: Page(page: 1, perPage: 6) {
+    trending: Page(page: 1, perPage: 25) {
       media(sort: TRENDING_DESC, type: ANIME, isAdult: false, seasonYear: $currentYear) {
         ...animeFields
       }
     }
-    popular: Page(page: 1, perPage: 6) {
+    popular: Page(page: 1, perPage: 25) {
       media(sort: POPULARITY_DESC, type: ANIME, isAdult: false) {
         ...animeFields
       }
@@ -43,22 +43,22 @@ const query = `
         ...animeFields
       }
     }
-    upcomingNextSeason: Page(page: 1, perPage: 6) {
+    upcomingNextSeason: Page(page: 1, perPage: 25) {
       media(season: $nextSeason, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
         ...animeFields
       }
     }
-    popularThisSeason: Page(page: 1, perPage: 6) {
+    popularThisSeason: Page(page: 1, perPage: 25) {
       media(season: $currentSeason, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
         ...animeFields
       }
     }
-    allTimePopularMovies: Page(page: 1, perPage: 6) {
+    allTimePopularMovies: Page(page: 1, perPage: 25) {
       media(sort: POPULARITY_DESC, type: ANIME, format: MOVIE, isAdult: false) {
         ...animeFields
       }
     }
-    upcomingNextYear: Page(page: 1, perPage: 6) {
+    upcomingNextYear: Page(page: 1, perPage: 25) {
       media(seasonYear: $nextYear, type: ANIME, sort: POPULARITY_DESC, isAdult: false) {
         ...animeFields
       }
