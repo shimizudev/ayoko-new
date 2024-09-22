@@ -1,42 +1,75 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, useScroll } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 
+function NavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="text-primary">
+      {children}
+    </Link>
+  );
+}
+
+// eslint-disable-next-line react/require-default-props
+function SearchButton({ className }: { className?: string }) {
+  return (
+    <Button className={className} variant="ghost">
+      <Search size={24} />
+    </Button>
+  );
+}
+
 export default function NavBar(): JSX.Element {
   const { scrollY } = useScroll();
+  const { theme } = useTheme();
+  const [navStyle, setNavStyle] = useState({ blur: 0, bgColor: 'transparent' });
+
+  useEffect(() => {
+    return scrollY.onChange((latest) => {
+      const isScrolled = latest > 10;
+      setNavStyle({
+        blur: isScrolled ? 10 : 0,
+        // eslint-disable-next-line no-nested-ternary
+        bgColor: isScrolled
+          ? theme === 'dark' || theme === 'system'
+            ? 'rgba(0, 0, 0, 0.5)'
+            : 'rgba(255, 255, 255, 0.5)'
+          : 'transparent',
+      });
+    });
+  }, [scrollY, theme]);
 
   return (
     <motion.nav
       className="fixed top-0 z-[9999] w-full"
       style={{
-        backgroundColor:
-          scrollY.get() > 10 ? 'rgba(255, 255, 255, 0.5)' : 'transparent',
-      }}
-      initial={{ backdropFilter: 'blur(0px)' }}
-      animate={{
-        backdropFilter: scrollY.get() > 10 ? 'blur(10px)' : 'blur(0px)',
+        backdropFilter: `blur(${navStyle.blur}px)`,
+        backgroundColor: navStyle.bgColor,
       }}
       transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-2">
-        <Link href="/" className="text-lg font-bold text-primary md:text-2xl">
-          Ayoko
-        </Link>
+        <NavLink href="/">
+          <span className="text-lg font-bold text-primary md:text-2xl">
+            Ayoko
+          </span>
+        </NavLink>
         <div className="hidden items-center space-x-6 md:flex">
-          <Link href="/catalogue" className="text-primary">
-            Catalogue
-          </Link>
-          <Button variant="ghost">
-            <Search size={24} />
-          </Button>
+          <NavLink href="/catalogue">Catalogue</NavLink>
+          <SearchButton />
         </div>
-        <Button className="md:hidden" variant="ghost">
-          <Search size={24} />
-        </Button>
+        <SearchButton className="md:hidden" />
       </div>
     </motion.nav>
   );
