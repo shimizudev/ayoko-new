@@ -15,9 +15,29 @@ function cleanDescription(input: string): string {
   return doc.body.textContent || '';
 }
 
+interface CacheEntry {
+  url: string;
+  timestamp: number;
+}
+
+const trailerCache: { [id: string]: CacheEntry } = {};
+const CACHE_DURATION = 60 * 60 * 1000;
+
 async function fetchTrailer(id: string): Promise<string> {
+  const now = Date.now();
+
+  if (trailerCache[id] && now - trailerCache[id].timestamp < CACHE_DURATION) {
+    return trailerCache[id].url;
+  }
+
   const data = await fetch(`/api/yt?id=${id}`);
   const json = await data.json();
+
+  trailerCache[id] = {
+    url: json.url,
+    timestamp: now,
+  };
+
   return json.url;
 }
 
