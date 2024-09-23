@@ -7,8 +7,7 @@ import { getMangaData } from '../lib/fetch/manga';
 import MangaCardSwiper from '@/components/home/manga-card-swiper';
 
 export default function Home(): JSX.Element {
-  const anime = use(getAnimeData());
-  const manga = use(getMangaData());
+  const [anime, manga] = use(Promise.all([getAnimeData(), getMangaData()]));
 
   return (
     <div>
