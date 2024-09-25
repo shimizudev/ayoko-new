@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MangaInfo, Title } from '@/lib/fetch/manga';
+import { getMonthName } from '@/lib/utils';
 
 interface MangaInfoProps {
   manga: MangaInfo;
@@ -36,6 +37,7 @@ function MangaBanner({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function MangaHeader({
   coverImage,
   title,
@@ -43,6 +45,8 @@ function MangaHeader({
   year,
   format,
   status,
+  day,
+  month,
 }: {
   coverImage: string;
   title: Title;
@@ -50,6 +54,8 @@ function MangaHeader({
   year: number;
   format: string;
   status: string;
+  day: number;
+  month: number;
 }): JSX.Element {
   return (
     <motion.div
@@ -61,15 +67,17 @@ function MangaHeader({
       <img
         src={coverImage}
         alt={title.english || title.romaji || ''}
-        className="h-48 w-36 rounded-lg object-cover shadow-md sm:h-64 sm:w-48"
+        className="h-52 w-36 rounded-lg object-cover shadow-md sm:h-[268px] sm:w-48"
       />
       <div className="flex-1 text-center sm:text-left">
+        <h2>
+          {day} {getMonthName(month)} {year}
+        </h2>
+
         <h1 className="mb-2 text-2xl font-bold sm:text-3xl">
           {title.english || title.romaji}
         </h1>
-        <p className="mb-2 text-sm text-primary-foreground/75">
-          {title.romaji}
-        </p>
+        <p className="mb-2 text-sm text-primary/85">{title.romaji}</p>
         <div className="mb-2 flex flex-wrap justify-center gap-2 sm:justify-start">
           <Badge className="rounded">
             {season} {year}
@@ -155,7 +163,10 @@ export default function MangaInfoContainer({
     totalEpisodes,
     averageRating,
     relations,
+    startDate,
   } = manga;
+
+  const { month, day } = startDate;
 
   return (
     <motion.div
@@ -165,7 +176,7 @@ export default function MangaInfoContainer({
       transition={{ duration: 1.5 }}
     >
       <MangaBanner bannerImage={bannerImage} title={title} />
-      <div className="relative -mt-16 px-4 py-4 sm:-mt-24 sm:px-6">
+      <div className="relative -mt-24 px-4 py-4 sm:-mt-44 sm:px-6">
         <MangaHeader
           coverImage={coverImage}
           title={title}
@@ -173,6 +184,8 @@ export default function MangaInfoContainer({
           year={year!}
           format={format}
           status={status}
+          day={day}
+          month={month}
         />
         <MangaDetails
           description={description}
