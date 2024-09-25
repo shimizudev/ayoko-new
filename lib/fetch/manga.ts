@@ -337,6 +337,7 @@ const fetchAnilistInfo = async (id: string) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: infoQuery, variables }),
+    cache: 'no-store',
   });
 
   const json = (await response.json()) as MediaResponse;
@@ -346,7 +347,8 @@ const fetchAnilistInfo = async (id: string) => {
 
 const fetchAnifyInfo = async (id: string) => {
   const response = await fetch(
-    `${ANIFY_URL}/media?id=${id}&providerId=anilist`
+    `${ANIFY_URL}/media?id=${id}&providerId=anilist`,
+    { cache: 'no-store' }
   );
 
   const data = (await response.json()) as Anify;
@@ -366,6 +368,7 @@ const fetchMangaData = async (): Promise<FetchMangaResponse> => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
+    cache: 'no-store',
   });
   const json = await response.json();
 
