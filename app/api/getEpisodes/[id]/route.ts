@@ -159,6 +159,29 @@ export interface EpisodeReturnType {
   };
 }
 
+class Cache<K, V> {
+  private cache: Map<K, { value: V; timestamp: number }>;
+  private timeout: number;
+
+  constructor(timeout: number) {
+    this.cache = new Map();
+    this.timeout = timeout;
+  }
+
+  set(key: K, value: V): void {
+    this.cache.set(key, { value, timestamp: Date.now() });
+  }
+
+  get(key: K): V | undefined {
+    const item = this.cache.get(key);
+    if (item && Date.now() - item.timestamp < this.timeout) {
+      return item.value;
+    }
+    this.cache.delete(key);
+    return undefined;
+  }
+}
+
 const anilist = new META.Anilist();
 
 const formatTitle = (
@@ -477,10 +500,17 @@ async function mergeEpisodesWithMetadata(
   }));
 }
 
+const cache = new Cache<string, EpisodeReturnType[]>(60 * 60 * 1000);
+
 export const GET = async (
   req: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<EpisodeReturnType[]>> => {
+  const cachedResult = cache.get(params.id);
+  if (cachedResult) {
+    return NextResponse.json(cachedResult);
+  }
+
   const animeEpisodesPromise = safeAwait(fetchAnimeEpisodes(params.id));
   const metadataPromise = safeAwait(fetchEpisodeData(params.id));
   const anifyEpisodesPromise = safeAwait(fetchAnifyEpisodes(params.id));
@@ -515,6 +545,8 @@ export const GET = async (
       ...(anifyFormattedEpisodes as any),
     ])
   );
+
+  cache.set(params.id, finalEpisodes as EpisodeReturnType[]);
 
   return NextResponse.json(finalEpisodes) as NextResponse<EpisodeReturnType[]>;
 };
