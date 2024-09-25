@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import { Search } from 'lucide-react';
+import { Search, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 
 function NavLink({
@@ -30,10 +31,50 @@ function SearchButton({ className }: { className?: string }) {
   );
 }
 
-export default function NavBar(): JSX.Element {
+function InfoNav({ title }: { title: string }) {
+  const router = useRouter();
+
+  return (
+    <div className="flex w-full items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <ArrowLeft size={24} />
+        </Button>
+        <Link href="/">
+          <Button variant="ghost">
+            <Home size={24} />
+          </Button>
+        </Link>
+        <h1 className="text-lg font-bold">{title}</h1>
+      </div>
+
+      <div className="hidden items-center space-x-6 md:flex">
+        <NavLink href="/catalogue">Catalogue</NavLink>
+        <SearchButton />
+      </div>
+
+      <SearchButton className="md:hidden" />
+    </div>
+  );
+}
+
+const checkIsInfoPage = () => {
+  const pathname = usePathname();
+
+  const isInfoPage = ['/anime', '/manga', '/watch'].includes(
+    `/${pathname.split('/')[1]}`
+  );
+
+  return isInfoPage;
+};
+
+// eslint-disable-next-line react/require-default-props
+export default function NavBar({ title }: { title?: string }): JSX.Element {
   const { scrollY } = useScroll();
   const { theme } = useTheme();
   const [navStyle, setNavStyle] = useState({ blur: 0, bgColor: 'transparent' });
+
+  const isInfoPage = checkIsInfoPage();
 
   useEffect(() => {
     return scrollY.onChange((latest) => {
@@ -53,23 +94,29 @@ export default function NavBar(): JSX.Element {
   return (
     <motion.nav
       className="fixed top-0 z-[9999] w-full"
-      style={{
+      animate={{
         backdropFilter: `blur(${navStyle.blur}px)`,
         backgroundColor: navStyle.bgColor,
       }}
       transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-2">
-        <NavLink href="/">
-          <span className="text-lg font-bold text-primary md:text-2xl">
-            Ayoko
-          </span>
-        </NavLink>
-        <div className="hidden items-center space-x-6 md:flex">
-          <NavLink href="/catalogue">Catalogue</NavLink>
-          <SearchButton />
-        </div>
-        <SearchButton className="md:hidden" />
+        {isInfoPage ? (
+          <InfoNav title={title || ''} />
+        ) : (
+          <>
+            <NavLink href="/">
+              <span className="text-lg font-bold text-primary md:text-2xl">
+                Ayoko
+              </span>
+            </NavLink>
+            <div className="hidden items-center space-x-6 md:flex">
+              <NavLink href="/catalogue">Catalogue</NavLink>
+              <SearchButton />
+            </div>
+            <SearchButton className="md:hidden" />
+          </>
+        )}
       </div>
     </motion.nav>
   );
