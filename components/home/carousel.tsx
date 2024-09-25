@@ -298,8 +298,8 @@ function LinesIndicator({
             width: index === currentIndex ? '30px' : '20px',
             backgroundColor:
               index === currentIndex
-                ? 'rgba(255, 255, 255, 1)'
-                : 'rgba(255, 255, 255, 0.70)',
+                ? 'rgba(255, 255, 255, 0.60)'
+                : 'rgba(255, 255, 255, 0.50)',
           }}
           transition={{ duration: 0.3 }}
         >
