@@ -302,6 +302,14 @@ const getZoro = async (id: string): Promise<{ id: string }> => {
 const getMappings = async (
   id: string
 ): Promise<{ subId: string; dubId: string; hianime: string }> => {
+  if (id === '20455') {
+    return {
+      subId: 'super-sonico-animation',
+      dubId: 'soniani-super-sonico-the-animation-dub',
+      hianime: '',
+    };
+  }
+
   const googMapPromise = safeAwait(getGogoanimeMapping(id));
   const zoroMapPromise = safeAwait(getZoro(id));
 
