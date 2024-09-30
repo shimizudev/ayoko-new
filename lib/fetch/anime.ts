@@ -1,5 +1,6 @@
 import { ANIFY_URL } from '../constants';
 import { getSeason } from '../utils';
+import Cache from '../cache';
 
 export interface Anime {
   id: string;
@@ -363,6 +364,8 @@ const infoQuery = `
   }
 }`;
 
+const cacheInfo = new Cache<string, AnimeInfo>(60 * 60 * 1000);
+
 const fetchAnimeData = async (): Promise<FetchAnimeResponse> => {
   const variables = {
     nextSeason: getSeason(new Date().getMonth() + 1),
@@ -387,7 +390,15 @@ const cache = new Map<
   { data: FetchAnimeResponse; timestamp: number }
 >();
 
+const anilistInfoCache = new Cache<string, MediaResponse>(60 * 60 * 1000);
+
 const fetchAnilistInfo = async (id: string) => {
+  const cachedData = anilistInfoCache.get(id);
+
+  if (cachedData) {
+    return cachedData;
+  }
+
   const variables = {
     mediaId: id,
   };
@@ -401,15 +412,27 @@ const fetchAnilistInfo = async (id: string) => {
 
   const json = (await response.json()) as MediaResponse;
 
+  anilistInfoCache.set(id, json);
+
   return json.data.Media as Media;
 };
 
+const anifyInfoCache = new Cache<string, Anify>(60 * 60 * 1000);
+
 const fetchAnifyInfo = async (id: string) => {
+  const cachedData = anifyInfoCache.get(id);
+
+  if (cachedData) {
+    return cachedData;
+  }
+
   const response = await fetch(`${ANIFY_URL}/info/${id}`, {
     cache: 'no-store',
   });
 
   const data = (await response.json()) as Anify;
+
+  anifyInfoCache.set(id, data);
 
   return data;
 };
@@ -431,6 +454,12 @@ export const getAnimeData = async (): Promise<FetchAnimeResponse> => {
 };
 
 export const getAnimeInfo = async (id: string): Promise<AnimeInfo> => {
+  const cachedInfo = cacheInfo.get(id);
+
+  if (cachedInfo) {
+    return cachedInfo;
+  }
+
   const [anify, anilist] = await Promise.all([
     fetchAnifyInfo(id),
     fetchAnilistInfo(id),
@@ -440,6 +469,8 @@ export const getAnimeInfo = async (id: string): Promise<AnimeInfo> => {
     ...anify,
     ...anilist,
   } as AnimeInfo;
+
+  cacheInfo.set(id, mergedInfo);
 
   return mergedInfo;
 };
