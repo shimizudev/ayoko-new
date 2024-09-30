@@ -1,5 +1,5 @@
 /* eslint-disable unicorn/no-array-for-each */
-import stringSimilarity from 'fastest-levenshtein';
+import * as stringSimilarity from 'fastest-levenshtein';
 
 export type Result<T> = {
   title: string;
