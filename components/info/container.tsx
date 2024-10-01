@@ -8,13 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AnimeInfo, Title } from '@/lib/fetch/anime';
 import { getMonthName } from '@/lib/utils';
-import { EpisodeReturnType } from '@/app/api/getEpisodes/[id]/route';
 import Episodes from './episodes';
 import { safeDestructure } from '@/lib/obj';
 
 interface AnimeInfoProps {
   anime: AnimeInfo;
-  episodes: EpisodeReturnType[];
 }
 
 function AnimeBanner({
@@ -153,7 +151,6 @@ function AnimeActions() {
 
 export default function AnimeInfoContainer({
   anime,
-  episodes,
 }: AnimeInfoProps): JSX.Element {
   const {
     title,
@@ -198,7 +195,7 @@ export default function AnimeInfoContainer({
         />
         <AnimeActions />
         {relations && relations.length > 0 && <div className="mt-6" />}
-        <Episodes episodes={episodes} id={anime.id} />
+        <Episodes id={anime.id} />
       </div>
     </motion.div>
   );

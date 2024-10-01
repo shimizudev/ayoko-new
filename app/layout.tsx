@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/providers/theme-provider';
 import NavBar from '@/components/base/navbar';
 import Footer from '@/components/base/footer';
+import TanstackProvider from '@/providers/tanstack-provider';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -31,16 +32,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <NavBar />
-          <main>{children}</main>
-          <Footer />
-        </ThemeProvider>
+        <TanstackProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NavBar />
+            <main>{children}</main>
+            <Footer />
+          </ThemeProvider>
+        </TanstackProvider>
       </body>
     </html>
   );

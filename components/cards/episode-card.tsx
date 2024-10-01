@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +69,20 @@ function EpisodeDetails({
   );
 }
 
+const cardVariants = {
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+  hover: {
+    scale: 0.98,
+    transition: { type: 'spring', stiffness: 200, damping: 20 },
+  },
+  hidden: { opacity: 0, y: 20 },
+};
+
+// eslint-disable-next-line max-lines-per-function
 export default function EpisodeCard({
   title,
   thumbnail,
@@ -81,17 +96,24 @@ export default function EpisodeCard({
   provider,
   audio,
 }: EpisodeProps): JSX.Element {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: true });
+
   return (
     <motion.div
-      whileHover={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+      ref={ref}
+      animate={isInView ? 'visible' : 'hidden'}
+      initial="hidden"
+      variants={cardVariants}
+      whileHover="hover"
       className="flex w-full overflow-hidden rounded-lg bg-muted text-card-foreground shadow-md transition-shadow duration-300 hover:shadow-lg"
     >
       <Link
-        href={`/watch/${id}?n=${number}&a=${audio}&p=${provider}`}
+        // eslint-disable-next-line no-nested-ternary
+        href={`/watch/${id}?n=${number}&a=${audio}&p=${provider === 'gogoanime' ? '1' : provider === 'hianime' ? '2' : '3'}`}
         className="flex w-full"
       >
-        <div className="w-1/3 flex-shrink-0 sm:w-1/4">
+        <div className="w-1/3 flex-shrink-0 sm:w-[20%]">
           <Image
             src={thumbnail}
             alt={title}

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
 import { EpisodeReturnType } from '@/app/api/getEpisodes/[id]/route';
 import EpisodeCard from '../cards/episode-card';
 import useMounted from '@/hooks/use-mounted';
@@ -13,30 +15,12 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Input } from '../ui/input';
+import { getEpisodes } from '@/lib/fetch/episode';
 
 function getFilteredProviders(episodes: EpisodeReturnType[]) {
   return episodes.filter(
     (provider) =>
       provider.episodes.sub.length > 0 || provider.episodes.dub.length > 0
-  );
-}
-
-function getCurrentEpisodes(
-  filteredProviders: EpisodeReturnType[],
-  selectedProvider: string,
-  audioType: 'sub' | 'dub'
-) {
-  return (
-    filteredProviders.find((ep) => ep.providerId === selectedProvider)
-      ?.episodes[audioType] || []
-  );
-}
-
-function getFilteredEpisodes(currentEpisodes: any[], searchQuery: string) {
-  return currentEpisodes.filter(
-    (episode) =>
-      episode.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      episode.number.toString().includes(searchQuery)
   );
 }
 
@@ -53,16 +37,6 @@ function validateSelectedProvider(
     setSelectedProvider(filteredProviders[0]?.providerId || '');
   }
 }
-
-type SelectType = {
-  selectedProvider: string;
-  filteredProviders: EpisodeReturnType[];
-  handleProviderChange: (value: string) => void;
-  audioType: 'sub' | 'dub';
-  handleAudioTypeChange: (value: 'sub' | 'dub') => void;
-  searchQuery: string;
-  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-};
 
 function Selects({
   selectedProvider,
@@ -110,42 +84,12 @@ function Selects({
   );
 }
 
-function Header({
-  selectedProvider,
-  filteredProviders,
-  handleProviderChange,
-  audioType,
-  handleAudioTypeChange,
-  searchQuery,
-  handleSearchChange,
-}: SelectType) {
-  return (
-    <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row">
-      <h1 className="text-2xl font-bold">Stream Episodes</h1>
-      <Selects
-        selectedProvider={selectedProvider}
-        filteredProviders={filteredProviders}
-        handleProviderChange={handleProviderChange}
-        audioType={audioType}
-        handleAudioTypeChange={handleAudioTypeChange}
-        searchQuery={searchQuery}
-        handleSearchChange={handleSearchChange}
-      />
-    </div>
-  );
-}
-
 function EpisodesList({
   filteredEpisodes,
   audioType,
   selectedProvider,
   id,
-}: {
-  filteredEpisodes: any[];
-  audioType: string;
-  selectedProvider: string;
-  id: string;
-}) {
+}: EpisodesListProps) {
   return filteredEpisodes.length === 0 ? (
     <p>No episodes found</p>
   ) : (
@@ -170,28 +114,58 @@ function EpisodesList({
   );
 }
 
-export default function Episodes({
-  episodes,
-  id,
-}: {
-  id: string;
-  episodes: EpisodeReturnType[];
-}): JSX.Element | null {
-  const isMounted = useMounted();
+function Header({
+  selectedProvider,
+  filteredProviders,
+  handleProviderChange,
+  audioType,
+  handleAudioTypeChange,
+  searchQuery,
+  handleSearchChange,
+  refetch,
+}: HeaderProps) {
+  return (
+    <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row">
+      <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold">Stream Episodes</h1>
+        <button type="button" onClick={refetch}>
+          <RefreshCw className="h-5 w-5 text-blue-500 hover:text-blue-700" />
+        </button>
+      </div>
+      <Selects
+        selectedProvider={selectedProvider}
+        filteredProviders={filteredProviders}
+        handleProviderChange={handleProviderChange}
+        audioType={audioType}
+        handleAudioTypeChange={handleAudioTypeChange}
+        searchQuery={searchQuery}
+        handleSearchChange={handleSearchChange}
+      />
+    </div>
+  );
+}
 
-  const filteredProviders = getFilteredProviders(episodes);
+// eslint-disable-next-line max-lines-per-function
+export default function Episodes({ id }: { id: string }): JSX.Element | null {
+  const isMounted = useMounted();
+  const {
+    data: episodes,
+    isLoading,
+    isError,
+    isFetching,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: ['episodes', id],
+    queryFn: ({ queryKey }) => getEpisodes(queryKey[1] as string),
+  });
+
+  const filteredProviders = getFilteredProviders(episodes || []);
   const [selectedProvider, setSelectedProvider] = useState<string>(
     filteredProviders[0]?.providerId || ''
   );
   const [audioType, setAudioType] = useState<'sub' | 'dub'>('sub');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const currentEpisodes = getCurrentEpisodes(
-    filteredProviders,
-    selectedProvider,
-    audioType
-  );
-  const filteredEpisodes = getFilteredEpisodes(currentEpisodes, searchQuery);
 
   useEffect(() => {
     validateSelectedProvider(
@@ -201,7 +175,19 @@ export default function Episodes({
     );
   }, [filteredProviders, selectedProvider]);
 
+  const currentEpisodes =
+    filteredProviders.find((ep) => ep.providerId === selectedProvider)
+      ?.episodes[audioType] || [];
+  const filteredEpisodes = currentEpisodes.filter(
+    (episode) =>
+      episode.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      episode.number.toString().includes(searchQuery)
+  );
+
   if (!isMounted) return null;
+
+  if (isError) return <p>Error loading episodes. Please try again.</p>;
+  if (isLoading || isFetching || isPending) return <p>Loading episodes...</p>;
 
   return (
     <>
@@ -213,6 +199,7 @@ export default function Episodes({
         handleAudioTypeChange={setAudioType}
         searchQuery={searchQuery}
         handleSearchChange={(event) => setSearchQuery(event.target.value)}
+        refetch={refetch}
       />
       <EpisodesList
         filteredEpisodes={filteredEpisodes}
@@ -223,3 +210,22 @@ export default function Episodes({
     </>
   );
 }
+
+type SelectType = {
+  selectedProvider: string;
+  filteredProviders: EpisodeReturnType[];
+  handleProviderChange: (value: string) => void;
+  audioType: 'sub' | 'dub';
+  handleAudioTypeChange: (value: 'sub' | 'dub') => void;
+  searchQuery: string;
+  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+type EpisodesListProps = {
+  filteredEpisodes: any[];
+  audioType: string;
+  selectedProvider: string;
+  id: string;
+};
+
+type HeaderProps = SelectType & { refetch: () => void };
