@@ -1,3 +1,5 @@
+/* eslint-disable react/require-default-props */
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -89,6 +91,8 @@ function EpisodesList({
   audioType,
   selectedProvider,
   id,
+  cover,
+  banner,
 }: EpisodesListProps) {
   return filteredEpisodes.length === 0 ? (
     <p>No episodes found</p>
@@ -98,7 +102,7 @@ function EpisodesList({
         <EpisodeCard
           key={episode.id}
           title={episode.title}
-          thumbnail={episode.thumbnail}
+          thumbnail={episode.thumbnail || banner || cover}
           description={episode.description}
           released={episode.released}
           number={episode.number}
@@ -146,7 +150,15 @@ function Header({
 }
 
 // eslint-disable-next-line max-lines-per-function
-export default function Episodes({ id }: { id: string }): JSX.Element | null {
+export default function Episodes({
+  id,
+  banner,
+  cover,
+}: {
+  id: string;
+  banner?: string;
+  cover: string;
+}): JSX.Element | null {
   const isMounted = useMounted();
   const {
     data: episodes,
@@ -206,6 +218,8 @@ export default function Episodes({ id }: { id: string }): JSX.Element | null {
         audioType={audioType}
         selectedProvider={selectedProvider}
         id={id}
+        cover={cover}
+        banner={banner}
       />
     </>
   );
@@ -226,6 +240,8 @@ type EpisodesListProps = {
   audioType: string;
   selectedProvider: string;
   id: string;
+  banner?: string;
+  cover: string;
 };
 
 type HeaderProps = SelectType & { refetch: () => void };

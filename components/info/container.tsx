@@ -195,7 +195,7 @@ export default function AnimeInfoContainer({
         />
         <AnimeActions />
         {relations && relations.length > 0 && <div className="mt-6" />}
-        <Episodes id={anime.id} />
+        <Episodes id={anime.id} banner={bannerImage} cover={coverImage} />
       </div>
     </motion.div>
   );
