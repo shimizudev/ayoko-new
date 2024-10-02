@@ -10,7 +10,7 @@ import { safeAwait } from '@/lib/promise';
 import { ANIFY_URL } from '@/lib/constants';
 import Cache from '@/lib/cache';
 
-export const revalidate = 3600;
+export const revalidate = 0;
 
 export interface Titles {
   'x-jat': string;
@@ -125,6 +125,7 @@ export interface AnifyEpisodes {
 }
 
 export interface EpisodeData {
+  episodeId: string;
   id: string;
   isFiller: boolean | null;
   img?: string;
@@ -346,8 +347,8 @@ async function fetchAnimeEpisodes(animeId: string): Promise<AnimeEpisodes[]> {
       }
 
       return response.episodes?.map((ep) => ({
-        id: ep.episodeId,
-        isFiller: ep.isFiller ?? null,
+        id: ep.id,
+        isFiller: ep.isFiller ?? false,
       })) as EpisodeData[];
     };
 
@@ -358,7 +359,7 @@ async function fetchAnimeEpisodes(animeId: string): Promise<AnimeEpisodes[]> {
         ? (await safeAwait(getAnimeEpisodes(hianime)))?.[0]?.episodes.map(
             (ep) => ({
               id: ep.episodeId,
-              isFiller: ep.isFiller ?? null,
+              isFiller: ep.isFiller ?? false,
             })
           ) || []
         : Promise.resolve([]),
@@ -440,7 +441,7 @@ function getEpisodeDescription(meta: Episode | undefined): string {
 }
 
 function getThumbnail(episode: EpisodeData, meta: Episode | undefined): string {
-  return episode.img ?? episode.image ?? meta?.image ?? '';
+  return meta?.image ?? episode.img ?? episode.image ?? '';
 }
 
 async function mergeEpisodesWithMetadata(
@@ -457,7 +458,7 @@ async function mergeEpisodesWithMetadata(
     meta: Episode | undefined
   ) {
     return {
-      id: episode.id,
+      id: episode.id || episode.episodeId,
       number: index + 1,
       description: getEpisodeDescription(meta),
       isFiller: episode.isFiller || false,
