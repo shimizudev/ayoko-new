@@ -3,12 +3,12 @@ import { BASE_URL } from '../constants';
 import { safeAwait } from '../promise';
 import { EpisodeReturnType } from '@/app/api/getEpisodes/[id]/route';
 
-interface StreamSource {
+export interface StreamSource {
   url: string;
   quality: string;
 }
 
-interface Subtitle {
+export interface Subtitle {
   url: string;
   lang: string;
 }

@@ -60,7 +60,7 @@ function EpisodeDetails({
         <EpisodeDuration released={released} duration={duration} />
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-        <Badge variant="secondary">{rating}</Badge>
+        <Badge>{rating}</Badge>
         {isFiller && <Badge variant="outline">Filler</Badge>}
         <span className="text-muted-foreground">{provider}</span>
         <span className="text-muted-foreground">{audio}</span>
