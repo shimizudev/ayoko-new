@@ -1,6 +1,13 @@
-import type { Config } from 'tailwindcss';
+import { Config, PluginAPI } from 'tailwindcss/types/config';
 import twAnimate from 'tailwindcss-animate';
 import scrollbarPl from 'tailwind-scrollbar';
+
+function customVariants({ addVariant, matchVariant }: PluginAPI): void {
+  matchVariant('parent-data', (value: string) => `.parent[data-${value}] > &`);
+
+  addVariant('hocus', ['&:hover', '&:focus-visible']);
+  addVariant('group-hocus', ['.group:hover &', '.group:focus-visible &']);
+}
 
 const config: Config = {
   darkMode: ['class'],
@@ -60,6 +67,14 @@ const config: Config = {
       },
     },
   },
-  plugins: [twAnimate, scrollbarPl],
+  plugins: [
+    twAnimate,
+    scrollbarPl,
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    require('@vidstack/react/tailwind.cjs')({
+      prefix: 'media',
+    }),
+    customVariants,
+  ],
 };
 export default config;
