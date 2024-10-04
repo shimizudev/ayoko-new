@@ -23,7 +23,7 @@ import {
 } from '@vidstack/react/player/layouts/default';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 
 import { SkipConfigurationSubMenu } from './components/skip-configuration';
 import { QualitySubmenu } from './components/quality';
@@ -90,17 +90,18 @@ export function Player({
 
   const duration = playerRef.current?.duration;
 
-  function onPlay() {
+  // Use useCallback to memoize event handlers and avoid unnecessary re-renders.
+  const onPlay = useCallback(() => {
     setIsPlaying(true);
-  }
+  }, []);
 
-  function onPause() {
+  const onPause = useCallback(() => {
     setIsPlaying(false);
-  }
+  }, []);
 
-  function onEnd() {
+  const onEnd = useCallback(() => {
     setIsPlaying(false);
-  }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -116,7 +117,7 @@ export function Player({
     })();
   }, [episodeNumber, idMal]);
 
-  function onCanPlay() {
+  const onCanPlay = useCallback(() => {
     const opening =
       skipData?.results?.find((item) => item.skipType === 'op') || null;
     const ending =
@@ -169,8 +170,6 @@ export function Player({
       playerRef.current?.textTracks.add(track);
     }
 
-    // Update buttons visibility based on the calculated skip time
-    // eslint-disable-next-line consistent-return
     playerRef.current?.subscribe(({ currentTime }) => {
       if (skipTime.length > 0) {
         const openingStart = skipTime[0]?.startTime ?? 0;
@@ -199,12 +198,47 @@ export function Player({
           currentTime < openingEnd
         ) {
           Object.assign(playerRef.current ?? {}, { currentTime: openingEnd });
-
-          return null;
         }
       }
     });
-  }
+  }, [isAutoSkipEnabled, skipData, title]);
+
+  const handleOpening = useCallback(() => {
+    const skipTime = playerRef.current?.textTracks[0]?.cues[0];
+
+    if (skipTime) {
+      Object.assign(playerRef.current ?? {}, {
+        currentTime: skipTime.endTime ?? 0,
+      });
+    }
+  }, []);
+
+  const handleEnding = useCallback(() => {
+    const skipTime = playerRef.current?.textTracks[0]?.cues[1];
+
+    if (skipTime) {
+      Object.assign(playerRef.current ?? {}, {
+        currentTime: skipTime.endTime ?? 0,
+      });
+    }
+  }, []);
+
+  const onLoadedMetadata = useCallback(() => {
+    const seek = getVideoProgress(id);
+
+    if (seek) {
+      const percentage =
+        duration === 0 ? 0 : seek.timeWatched / Math.round(duration!);
+
+      if (Number(seek.episodeNumber) === Number(episodeNumber)) {
+        if (percentage >= 0.9) {
+          remote.seek(0);
+        } else {
+          remote.seek(seek.timeWatched - 3);
+        }
+      }
+    }
+  }, [duration, getVideoProgress, id, episodeNumber, remote]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -229,51 +263,25 @@ export function Player({
     }
 
     return () => clearInterval(interval);
-  }, [isPlaying, duration]);
+  }, [
+    isPlaying,
+    duration,
+    id,
+    title,
+    poster,
+    episodeNumber,
+    provider,
+    subType,
+    episodeId,
+    updateVideoProgress,
+  ]);
 
-  function onProviderChange(prvdr: MediaProviderAdapter | null) {
+  const onProviderChange = useCallback((prvdr: MediaProviderAdapter | null) => {
     if (isHLSProvider(prvdr)) {
       // eslint-disable-next-line no-param-reassign
       prvdr.config = {};
     }
-  }
-
-  function handleOpening() {
-    const skipTime = playerRef.current?.textTracks[0]?.cues[0];
-
-    if (skipTime) {
-      Object.assign(playerRef.current ?? {}, {
-        currentTime: skipTime.endTime ?? 0,
-      });
-    }
-  }
-
-  function handleEnding() {
-    const skipTime = playerRef.current?.textTracks[0]?.cues[1];
-
-    if (skipTime) {
-      Object.assign(playerRef.current ?? {}, {
-        currentTime: skipTime.endTime ?? 0,
-      });
-    }
-  }
-
-  function onLoadedMetadata() {
-    const seek = getVideoProgress(id);
-
-    if (seek) {
-      const percentage =
-        duration === 0 ? 0 : seek.timeWatched / Math.round(duration!);
-
-      if (Number(seek.episodeNumber) === Number(episodeNumber)) {
-        if (percentage >= 0.9) {
-          remote.seek(0);
-        } else {
-          remote.seek(seek.timeWatched - 3);
-        }
-      }
-    }
-  }
+  }, []);
 
   return (
     <MediaPlayer
@@ -314,7 +322,13 @@ export function Player({
           </button>
         )}
         <DefaultVideoLayout
-          thumbnails={`https://cors.ayoko.fun/${subtitles.find((sub) => sub.lang === 'Thumbnails')!.url}`}
+          thumbnails={
+            subtitles &&
+            subtitles.length >= 0 &&
+            subtitles.find((sub) => sub.lang === 'Thumbnails')!.url
+              ? `https://cors.ayoko.fun/${subtitles.find((sub) => sub.lang === 'Thumbnails')!.url}`
+              : undefined
+          }
           icons={defaultLayoutIcons}
           slots={{
             settingsMenuEndItems: (
@@ -326,18 +340,20 @@ export function Player({
           }}
         />
       </MediaProvider>
-      {subtitles
-        .filter((t) => t.lang !== 'Thumbnails')
-        .map((t) => (
-          <Track
-            key={t.lang}
-            default={t.lang === 'English'}
-            kind="subtitles"
-            label={t.lang}
-            lang={t.lang}
-            src={t.url}
-          />
-        ))}
+      {subtitles &&
+        subtitles.length >= 0 &&
+        subtitles
+          .filter((t) => t.lang !== 'Thumbnails')
+          .map((t) => (
+            <Track
+              key={t.lang}
+              default={t.lang === 'English'}
+              kind="subtitles"
+              label={t.lang}
+              lang={t.lang}
+              src={t.url}
+            />
+          ))}
     </MediaPlayer>
   );
 }
