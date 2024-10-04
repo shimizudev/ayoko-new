@@ -21,6 +21,7 @@ interface IntroOutro {
 type Headers = unknown;
 
 interface MediaInfo {
+  error: string;
   sources: StreamSource[];
   subtitles: Subtitle[];
   audio: unknown[];
