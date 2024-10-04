@@ -421,17 +421,82 @@ async function fetchAnifyEpisodes(animeId: string) {
   };
 }
 
-function getMetaInfo(episodeIndex: number, metadata: Episode[]) {
-  return metadata.find(
+interface AnifyTMDBEpisode {
+  id: string;
+  description: string;
+  hasDub: boolean;
+  img: string;
+  isFiller: boolean;
+  number: number;
+  title: string;
+  updatedAt: number;
+  rating: number;
+}
+
+interface AnifyTMDBMetadata {
+  providerId: string;
+  data: AnifyTMDBEpisode[];
+}
+
+async function fetchAnifyTMDBMetadata(
+  animeId: string
+): Promise<AnifyTMDBMetadata[]> {
+  const [response, error] = await safeAwait(
+    fetch(`${ANIFY_URL}/content-metadata/${animeId}`)
+  );
+
+  if (error || !response) {
+    return [];
+  }
+
+  const [data, parseError] = await safeAwait(
+    response.json() as Promise<AnifyTMDBMetadata[]>
+  );
+
+  if (parseError || !data) {
+    return [];
+  }
+
+  return data;
+}
+
+// eslint-disable-next-line consistent-return
+function getMetaInfo(
+  episodeIndex: number,
+  metadata: Episode[],
+  anifyTMDBMetadata: AnifyTMDBMetadata[]
+) {
+  const aniZipMeta = metadata.find(
     (metaItem) => metaItem.episodeNumber === episodeIndex + 1
   );
+
+  if (aniZipMeta) {
+    return aniZipMeta;
+  }
+
+  const tmdbMeta = anifyTMDBMetadata
+    .find((provider) => provider.providerId === 'tmdb')
+    ?.data.find((episode) => episode.number === episodeIndex + 1);
+
+  if (tmdbMeta) {
+    return {
+      title: { en: tmdbMeta.title },
+      summary: tmdbMeta.description,
+      image: tmdbMeta.img,
+      rating: tmdbMeta.rating.toString(),
+      length: 0,
+      airDateUtc: new Date(tmdbMeta.updatedAt).toISOString(),
+      seasonNumber: 1,
+      tvdbId: 0,
+    } as Episode;
+  }
 }
 
 function getEpisodeTitle(meta: Episode | undefined, index: number): string {
   return (
-    meta?.title?.en ??
-    meta?.title?.['x-jat'] ??
-    meta?.title?.ja ??
+    meta?.title?.en ||
+    meta?.title?.['x-jat'] ||
+    meta?.title?.ja ||
     `Episode ${index + 1}`
   );
 }
@@ -450,7 +515,8 @@ async function mergeEpisodesWithMetadata(
     providerId: string;
     sub: EpisodeData[];
     dub: EpisodeData[];
-  }[]
+  }[],
+  anifyTMDBMetadata: AnifyTMDBMetadata[]
 ) {
   function mapSingleEpisode(
     episode: EpisodeData,
@@ -474,7 +540,11 @@ async function mergeEpisodesWithMetadata(
 
   function mapEpisodes(episodes: EpisodeData[], metadata: Episode[]) {
     return episodes.map((episode, index) =>
-      mapSingleEpisode(episode, index, getMetaInfo(index, metadata))
+      mapSingleEpisode(
+        episode,
+        index,
+        getMetaInfo(index, metadata, anifyTMDBMetadata)
+      )
     );
   }
 
@@ -501,12 +571,15 @@ export const GET = async (
   const animeEpisodesPromise = safeAwait(fetchAnimeEpisodes(params.id));
   const metadataPromise = safeAwait(fetchEpisodeData(params.id));
   const anifyEpisodesPromise = safeAwait(fetchAnifyEpisodes(params.id));
+  const anifyTMDBMetadataPromise = safeAwait(fetchAnifyTMDBMetadata(params.id));
 
-  const [[episodes], [episodeData], [anifyEpisodes]] = await Promise.all([
-    animeEpisodesPromise,
-    metadataPromise,
-    anifyEpisodesPromise,
-  ]);
+  const [[episodes], [episodeData], [anifyEpisodes], [anifyTMDBMetadata]] =
+    await Promise.all([
+      animeEpisodesPromise,
+      metadataPromise,
+      anifyEpisodesPromise,
+      anifyTMDBMetadataPromise,
+    ]);
 
   const anifyFormattedEpisodes = [
     {
@@ -527,10 +600,11 @@ export const GET = async (
   ];
 
   const [finalEpisodes] = await safeAwait(
-    mergeEpisodesWithMetadata(episodeData as Episode[], [
-      ...(episodes as any),
-      ...(anifyFormattedEpisodes as any),
-    ])
+    mergeEpisodesWithMetadata(
+      episodeData as Episode[],
+      [...(episodes as any), ...(anifyFormattedEpisodes as any)],
+      anifyTMDBMetadata as AnifyTMDBMetadata[]
+    )
   );
 
   cache.set(params.id, finalEpisodes as EpisodeReturnType[]);
