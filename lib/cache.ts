@@ -21,4 +21,4 @@ class Cache<K, V> {
   }
 }
 
-export default Cache;
+export default Cache
